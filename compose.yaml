@@ -1,0 +1,72 @@
+# version: "3.8"
+
+# services:
+#   db:
+#     image: postgres:14-alpine
+#     container_name: myapp-db
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_USER:     myuser
+#       POSTGRES_PASSWORD: mypass
+#       POSTGRES_DB:       newsapp
+#     volumes:
+#       - db_data:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+
+#   redis:
+#     image: redis:7-alpine
+#     container_name: myapp-redis
+#     restart: unless-stopped
+#     ports:
+#       - "6379:6379"
+
+#   backend:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     image: myapp-backend:latest
+#     container_name: myapp-backend
+#     restart: unless-stopped
+#     ports:
+#       - "8080:8080"
+#     environment:
+#       SPRING_DATASOURCE_URL:      jdbc:postgresql://db:5432/newsapp
+#       SPRING_DATASOURCE_USERNAME: myuser
+#       SPRING_DATASOURCE_PASSWORD: mypass
+#       SPRING_REDIS_HOST:          redis
+#       SPRING_REDIS_PORT:          6379
+#     depends_on:
+#       - db
+#       - redis
+
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#     image: myapp-frontend:latest
+#     container_name: myapp-frontend
+#     restart: unless-stopped
+#     ports:
+#       - "3000:80"   # or "8080:8080" if using dev server
+#     depends_on:
+#       - backend
+
+#   crawler:
+#     build:
+#       context: ./crawler
+#       dockerfile: Dockerfile
+#     image: myapp-crawler:latest
+#     container_name: myapp-crawler
+#     # If you only want it manually triggered, don't set restart
+#     restart: unless-stopped
+#     environment:
+#       DATABASE_URL: postgres://myuser:mypass@db:5432/newsapp
+#       REDIS_URL:    redis://redis:6379/0
+#     depends_on:
+#       - db
+#       - redis
+
+# volumes:
+#   db_data:
+#   mysql_data:    # if you use MySQL instead
