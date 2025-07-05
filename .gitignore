@@ -1,0 +1,27 @@
+# IDE
+.idea/
+.vscode/
+
+# Env 
+.env
+
+# Derivatives from OS
+.DS_Store
+.thumbs.db
+
+# Python Cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+backend/src/main/resources/application.properties
+curator/.env
+frontend/.env
+
+
