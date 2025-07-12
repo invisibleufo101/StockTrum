@@ -57,15 +57,16 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 16
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
-#    "scrapy.extensions.telnet.TelnetConsole": None,
-#}
+# EXTENSIONS = {
+#    "news_crawlers.pipelines.RepositoryPipeline": 100,
+# }
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
+# ITEM_PIPELINES = {
 #    "news_crawlers.pipelines.NewsCrawlersPipeline": 300,
-#}
+# }
+
 DOWNLOAD_HANDLERS = {
     "http": "scrapy_impersonate.ImpersonateDownloadHandler",
     "https": "scrapy_impersonate.ImpersonateDownloadHandler",

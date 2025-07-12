@@ -1,28 +1,71 @@
 import scrapy
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+from typing import Dict, List
+from urllib.parse import urlparse
 
 class ReuterSpider(scrapy.Spider):
+    
     name = "reuters"
+    source_name = "Reuters"
+    ARTICLE_SECTION_TYPE = set([
+        "world",
+        "business",
+        "markets",
+        "technology"
+    ])
+    custom_settings = {
+        "ITEM_PIPELINES": {
+            "news_crawlers.pipelines.ReutersCleanerPipeline": 300,
+            "news_crawlers.pipelines.RepositoryPipeline": 100,
+        }
+    }
+
+    def _get_past_dates(self) -> List[Dict[str, str]]:
+        past_dates = []
+        current_datetime = datetime.now()
+        end_datetime = self.recent_published_date
+        while current_datetime >= end_datetime:
+            past_dates.append({
+                "year": current_datetime.year,
+                "month": f"{current_datetime.month:02}",
+                "day": f"{current_datetime.day:02d}"
+            })
+            current_datetime -= timedelta(days=1)
+        return past_dates
 
     async def start(self):
-        for month in range(5, 6)[::-1]:    
+        past_dates = self._get_past_dates()
+        for past_date in past_dates:
             yield scrapy.Request(
-                url = f"https://www.reuters.com/sitemap/2025-{month:02}/01/1/",
+                url = f"https://www.reuters.com/sitemap/{past_date["year"]}-{past_date["month"]}/{past_date["day"]}/1/",
                 callback = self.parse_article_links,
                 meta = {"impersonate": "chrome120"}
             )
 
+    def do_articles_exist(self, response) -> bool:
+        if response.css("div[data-testid='EmptyPage']").get():
+            return False
+        return True
+    
+    def is_crawlable_article(self, url: str) -> bool:
+        parsed_url = urlparse(url)
+        news_categories = set(parsed_url.path.strip("/").split("/")[:-1])
+        if news_categories & self.ARTICLE_SECTION_TYPE:
+            return True
+        return False
+    
     def parse_article_links(self, response):
+        if not self.do_articles_exist(response):
+            return
+                
         # Scrape article inks
-        article_links = response.css("li[data-testid='FeedListItem']")
+        article_links = response.css("li[data-testid='FeedListItem'] a[data-testid='TitleLink']::attr(href)").getall()
         for article_link in article_links:
-            category = article_link.css("span[data-testid='KickerLabel'] > span[data-testid='KickerText']::text").get()
             # Only scrape Business related articles
-            if category == "Business":
-                url = article_link.css("a[data-testid='TitleLink']::attr(href)").get()
+            if self.is_crawlable_article(article_link):
                 yield response.follow(
-                    url = url,
+                    url = article_link,
                     callback = self.parse_article,
                     meta = {"impersonate" : "chrome120"}
                 )
@@ -39,7 +82,8 @@ class ReuterSpider(scrapy.Spider):
     def parse_article(self, response):
         yield {    
             "language": "en",
-            "source": "Reuters",
+            "market": "US",
+            "source": self.source_name,
             "url" : response.url,
             "published_at": response.css("time[data-testid='Body']::attr(datetime)").get(),
             "title" : response.css("h1[data-testid='Heading']::text").get(),
@@ -47,9 +91,7 @@ class ReuterSpider(scrapy.Spider):
             "img_url": response.css("div[data-testid='Image'] img::attr(src)").get(),   
         }
         
-    def get_past_months(self) -> list:
-        current_month = datetime.now(ZoneInfo("America/New_York")).month
-        return [f"{m:02d}" for m in range(current_month, 0, -1)]
+    
 
         
         
