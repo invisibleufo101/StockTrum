@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from typing import Optional
 from datetime import datetime
 from bson.objectid import ObjectId
@@ -16,13 +16,15 @@ class ArticleSteps(BaseModel):
 
 class ArticleProcess(BaseModel):
     model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        json_schema_mode="validation",
-        json_encoders={ ObjectId: lambda oid: str(oid) }
+        arbitrary_types_allowed=True
     )
+    
     article_id: ObjectId
     crawled_process: ArticleSteps
     categorization_process: ArticleSteps = Field(default_factory=ArticleSteps)
     sentiment_analysis_process: ArticleSteps = Field(default_factory=ArticleSteps)
     summarization_process: ArticleSteps = Field(default_factory=ArticleSteps)
     
+    @field_serializer("article_id")
+    def serialize_article_id(self, article_id: ObjectId):
+        return str(article_id)

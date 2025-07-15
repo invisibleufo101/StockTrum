@@ -1,5 +1,5 @@
 import scrapy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from typing import Dict, List
 from urllib.parse import urlparse
@@ -23,7 +23,7 @@ class ReuterSpider(scrapy.Spider):
 
     def _get_past_dates(self) -> List[Dict[str, str]]:
         past_dates = []
-        current_datetime = datetime.now()
+        current_datetime = datetime.now(timezone.utc)
         end_datetime = self.recent_published_date
         while current_datetime >= end_datetime:
             past_dates.append({

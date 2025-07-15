@@ -1,5 +1,5 @@
 from typing import Dict
-from datetime import datetime
+from datetime import datetime, timezone
 from repositories.mongo_db import MongoDB
 from models.article import Article
 from models.article_process import ArticleProcess, ProcessStatus
@@ -10,25 +10,27 @@ logger = logging.getLogger(__name__)
 
 class CrawelerRepository(MongoDB):
     
-    def create_article(self, article: Article) -> None:
-        result = {}
+    def save_article(self, article: Article) -> None:
+        article_result = self._create_article_document(article)
+        if article_result.get("acknowledged"):
+            article_result_id = article_result.get("inserted_id")
+            self._create_article_process_document(article_result_id)
+        
+    def _create_article_document(self, article: Article) -> Dict:
         try:
             article_document = article.model_dump()
             article_document["url"] = str(article_document["url"])
             if article_document.get("img_url") is not None:
                 article_document["img_url"] = str(article_document["img_url"])
             
-            result: Dict = self.insert_one(
+            return self.insert_one(
                 collection_name = self.ARTICLE_COLLECTION,
                 document = article_document
             )
         except Exception as e:
             logger.error(e)
-        
-        if result.get("acknowledged"):
-            self.create_article_process(result.get("inserted_id"))
-        
-    def create_article_process(self, article_id: ObjectId) -> None:
+    
+    def _create_article_process_document(self, article_id: ObjectId) -> Dict:
         try:
             article_process = ArticleProcess(
                 article_id = article_id,
@@ -38,7 +40,7 @@ class CrawelerRepository(MongoDB):
                 }
             )
             article_process_document = article_process.model_dump()
-            self.insert_one(
+            return self.insert_one(
                 collection_name = self.ARTICLE_PROCESS_COLLECTION,
                 document = article_process_document
             )
@@ -54,6 +56,7 @@ class CrawelerRepository(MongoDB):
                 projection = {"published_at" : 1},
                 sort = ("published_at", -1)
             )
-            return result.get("published_at")
+            # Return datetime string as Timezone aware datetime object
+            return result.get("published_at").replace(tzinfo=timezone.utc)
         except Exception as e:
             logger.error(e)

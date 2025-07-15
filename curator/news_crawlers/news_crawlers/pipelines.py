@@ -16,6 +16,7 @@ class RepositoryPipeline:
         self.default_crawl_date: datetime = self.get_default_crawl_recent_date(os.getenv("DEFAULT_CRAWL_RECENT_DATE"))
         
     def get_default_crawl_recent_date(self, default_crawl_datetime_str: str) -> datetime:
+        default_crawl_datetime_str = default_crawl_datetime_str.replace("Z", "+00:00")
         datetime_fmt = "%Y-%m-%dT%H:%M:%S%z"
         return datetime.strptime(default_crawl_datetime_str, datetime_fmt)
         
@@ -62,7 +63,7 @@ class CleanerPipeline:
     def process_item(self, item, spider):
         try:
             article_model = self.create_article_model(item)
-            spider.repository.create_article(article_model)    
+            spider.repository.save_article(article_model)    
         except Exception as e:
             logger.error(e)
             

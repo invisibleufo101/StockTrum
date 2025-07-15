@@ -1,6 +1,6 @@
 import scrapy
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class BISpider(scrapy.Spider):
@@ -39,15 +39,12 @@ class BISpider(scrapy.Spider):
         for link in article_links:
             yield response.follow(
                 url = link,
-                callback = self.parse_bi,
-                meta = {
-                    "impersonate": "chrome120"
-                }
+                callback = self.parse_bi
             )
             
     def should_stop_crawl(self, date_published_str: str) -> bool:
         datetime_fmt = "%m/%d/%Y %I:%M:%S %p"
-        date_published: datetime = datetime.strptime(date_published_str, datetime_fmt)
+        date_published: datetime = datetime.strptime(date_published_str, datetime_fmt).replace(tzinfo=timezone.utc)
         if date_published < self.recent_published_date:
             return True
         return False
@@ -76,10 +73,7 @@ class BISpider(scrapy.Spider):
                 
                 yield response.follow(
                     url = article.css("h3.latest-news__title a::attr(href)").get(),
-                    callback = self.parse_bi,
-                    meta = {
-                        "impersonate": "chrome120"
-                    }
+                    callback = self.parse_bi
                 )
                 
         # Go to next page
@@ -89,8 +83,7 @@ class BISpider(scrapy.Spider):
                 url = f"https://markets.businessinsider.com/news?p={current_page+1}",
                 callback = self.parse_links,
                 meta = {
-                    "impersonate": "chrome120",
-                    "page": current_page+1
+                    "page": current_page + 1
                 }
             )
         

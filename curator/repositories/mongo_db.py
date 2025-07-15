@@ -1,5 +1,5 @@
 import os
-from abc import ABC
+from dotenv import load_dotenv
 from pydantic import BaseModel
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
@@ -7,10 +7,8 @@ from pymongo.database import Database
 from pymongo.collection import Collection
 from pymongo.results import InsertOneResult, InsertManyResult, UpdateResult
 from pymongo.cursor import Cursor
-from pymongo import ASCENDING
 from typing import Dict, List, Any, Optional, Tuple, Union
-from dotenv import load_dotenv
-from pymongo import ASCENDING, DESCENDING
+from exceptions.repositories.unsafe_operation_exception import UnsafeOperationException
 
 class MongoDB():
     
@@ -97,7 +95,7 @@ class MongoDB():
         upsert: bool = False
     ) -> Dict[str, Any]:
         if not filter:
-            raise Exception("Updating without filters is not safe.")
+            raise UnsafeOperationException("Updating without filters is not safe.")
         
         collection = self._get_collection(collection_name)
         result = collection.update_one(filter, statement, upsert=upsert)
@@ -116,7 +114,7 @@ class MongoDB():
         upsert: bool = False
     ) -> Dict[str, Any]:
         if not filter:
-            raise Exception("Updating without filters is not safe.")
+            raise UnsafeOperationException("Updating without filters is not safe.")
     
         collection = self._get_collection(collection_name)
         results = collection.update_many(filter, statement, upsert=upsert)
@@ -135,7 +133,7 @@ class MongoDB():
         filter: Dict[str, str]
     ) -> int:
         if not filter:
-            raise Exception("Deleting without filters is not safe.")
+            raise UnsafeOperationException("Deleting without filters is not safe.")
         
         collection = self._get_collection(collection_name)
         return collection.delete_one(filter).deleted_count
@@ -146,7 +144,7 @@ class MongoDB():
         filter: Dict[str, str]
     ) -> int:
         if not filter:
-            raise Exception("Deleting without filters is not safe.")
+            raise UnsafeOperationException("Deleting without filters is not safe.")
         
         collection = self._get_collection(collection_name)
         return collection.delete_many(filter).deleted_count
